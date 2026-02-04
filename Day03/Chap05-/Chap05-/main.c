@@ -29,7 +29,7 @@ int main() {
 		printf("a:%d\n", a);
 		a = 0;
 	do{
-		printf("do while실행\n");
+		printf("do while실행\n"); //무조건 한번 실행
 		a--;
 	} while (a > 0);
 	printf("do while종료\n");

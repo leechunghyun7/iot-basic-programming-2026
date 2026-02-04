@@ -3,5 +3,10 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Project Path="Chap 05-04-app/Chap 05-04-app.vcxproj" />
+  <Project Path="Chap 05-05-app/Chap 05-05-app.vcxproj" />
+  <Project Path="chap quiz/chap quiz.vcxproj" />
   <Project Path="Chap05-/Chap05-.vcxproj" />
+  <Project Path="Chap05-06-app/Chap05-06-app.vcxproj" />
+  <Project Path="Chap05-07-app/Chap05-07-app.vcxproj" />
 </Solution>
