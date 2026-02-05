@@ -4,4 +4,6 @@
     <Platform Name="x86" />
   </Configurations>
   <Project Path="chap 07-01-app/chap 07-01-app.vcxproj" Id="28282302-207e-48b5-a4fd-3f53875301bd" />
+  <Project Path="Chap 07-03-app/Chap 07-03-app.vcxproj" Id="0491ebaa-a7fd-48e2-8a50-6e3ca7222828" />
+  <Project Path="Chap-07-02-app/Chap-07-02-app.vcxproj" Id="8085fc36-2241-4cae-b445-d6db7a07f4e7" />
 </Solution>
