@@ -1,0 +1,8 @@
+apple
+mango
+furit
+strawberry
+applemang
+dragon
+fruit
+watermelon
