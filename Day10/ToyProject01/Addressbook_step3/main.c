@@ -342,5 +342,3 @@ static void delete_contact(void) {
 
 	puts("삭제 완료!");
 }
-
-
