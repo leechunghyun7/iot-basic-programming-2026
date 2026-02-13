@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include "line.h"//라인에서 부르기 때문에 point를 굳이 안불러도 된다.
+#include "point.h"
 
 int main (void){
 
