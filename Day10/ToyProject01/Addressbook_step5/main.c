@@ -5,8 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_CONTRACTS 100
-#define NAME_LEN 31
+#define MAX_CONTRACTS 100//100명 주소록
+#define INIT_CAPACITY 10 //초깃값 10 구성
+#define NAME_LEN 31//이름 최대길이
 #define PHONE_LEN 20
 #define EMAIL_LEN 65
 #define ADDR_LEN 129
@@ -20,8 +21,12 @@ typedef struct _contact {
     char memo[MEMO_LEN];
 } Contact;
 
-static Contact contacts[MAX_CONTRACTS];
+//변수 선언
+
+//static Contact contacts[MAX_CONTRACTS];
+static Contact* contacts = NULL;//동적배열로
 static int count = 0;
+static int capacity = 0;
 
 // 함수 선언
 static void print_menu(void);
@@ -37,8 +42,24 @@ static int save_contacts(const char* filename);
 static int load_contacts(const char* filename);
 static void trim_newline(char* s);
 
+//step 6
+static int contains_pipe(const char* s);//입력 문자열중에 
+static int find_by_phone(const char* phone); //같은 전화번호 중복체크
+static void sort_by_name(void);//이름순 정렬 qsort 함수 사용 std lib에 포함된 함수
+static int cmp_contact_name(const void* a, const void* b);
+
+static int ab_init(void); //주소록 초기화
+static void ab_free(void);//주소록 메모리 해제
+static int ab_ensure_capacity(int need);//용량 추가여부 확인
+
+
 int main(void) {
     int choice = 0;
+
+    if (!ab_init()) {
+        printf("주소록 초기화 실패\n");
+        return 0;
+    }
 
     load_contacts("contacts.txt"); //프로그램 실행하면 데이터 로드!
 
@@ -63,15 +84,19 @@ int main(void) {
             delete_contact();
             break;
         case 6:
+            //정렬
+                sort_by_name();
+            break;
+        case 7:
             save_contacts("contacts.txt");
             printf("프로그램 종료\n");
             return 0;
-        case 7:
-           // save_contacts("contacts.txt");
-            break;
-        case 8://데이터 불러오기
-           //load_contacts("contacts.txt");
-            break;
+        //case 7:
+            // save_contacts("contacts.txt");
+           // break;
+        //case 8://데이터 불러오기
+            //load_contacts("contacts.txt");
+           // break;
         default:
             puts("잘못된 선택입니다.");
             break;
@@ -90,13 +115,46 @@ static void print_menu(void) {
     puts("3. 검색");
     puts("4. 수정");
     puts("5. 삭제");
-    puts("6. 종료");
+    puts("6. 정렬");
+    puts("7. 종료");
     //puts("7. 저장");
     //puts("8. 로드");
     puts("========================================");
 }
 
+static int contains_pipe(const char* s) {
+    return (strchr(s, '|') != NULL);
+}
+
+static int find_by_phone(const char* phone) {
+    int i;
+    for (i = 0; i < count; i++) {
+        if (strcmp(contacts[i].phone, phone) == 0) {
+            return i;
+        }
+    }
+    return -1; //일치하는게 없음
+}
+
+static int cmp_contact_name(const void* a, const void* b) {
+    const Contact* ca = (const  Contact*)a;
+    const Contact* cb = (const Contact*)b;
+
+    return strcmp(ca->name, (*cb).name);        //1,0,-1
+
+}
+
+static void sort_by_name(void) {
+    if (count <= 1) {
+        puts("정렬 불필요!");
+        return;
+    }
+    qsort(contacts, count, sizeof(Contact), cmp_contact_name);
+    puts("이름순 정렬 완료!");
+}
+
 static int read_menu(void) {
+
     int choice, ch;
 
     printf("선택> ");
@@ -129,18 +187,43 @@ static void add_contact(void) {
 
     printf("이름: ");
     read_line(contacts[count].name, NAME_LEN);
+    if (contains_pipe(contacts[count].name)) {
+        puts("'|'문자는 사용할 수 없습니다/ 다시 추가하세요");
+        return;//함수종료
+    }
 
-    printf("전화: ");
+    printf("전화[최대 20자]: ");
     read_line(contacts[count].phone, PHONE_LEN);
+
+    if (strlen(contacts[count].phone) == 0) {
+        puts("전화번호는 필수입니다.");
+        return;
+    }
+
+    {
+        int dup = find_by_phone(contacts[count].phone);
+        if (dup != -1) {
+            printf("동일 전화번호 존재(NO:%d,이름:%10s)\n", dup, contacts[dup].name);
+        }
+    }
 
     printf("주소: ");
     read_line(contacts[count].address, ADDR_LEN);
+    if (contains_pipe(contacts[count].address)) {
+
+        puts("'|'문자는 사용할 수 없습니다/ 다시 추가하세요");
+        return;//함수종료
+    }
 
     printf("이메일: ");
     read_line(contacts[count].email, EMAIL_LEN);
 
     printf("메모: ");
     read_line(contacts[count].memo, MEMO_LEN);
+    if (contains_pipe(contacts[count].memo)) {
+        puts("'|'문자는 사용할 수 없습니다/ 다시 추가하세요");
+        return;//함수종료
+    }
 
     count++;
     puts("추가 완료!");
@@ -375,3 +458,43 @@ static int load_contacts(const char* filename) {
     puts("로드 완료!");
     return 1;
 }
+static int ab_init(void) {
+    capacity = INIT_CAPACITY;
+    count = 0;
+    contacts = (Contact*)malloc(sizeof(Contact) * capacity);
+    if (!contacts) {
+        puts("메모리 할당 실패!!");
+        return 0;
+    }
+    return 1;
+}
+
+static void ab_free(void) {
+    free(contacts);
+    contacts = NULL;
+    count = 0;
+    capacity = 0;
+}
+//주소록 크기가 작으면 동적으로 늘리는 함수
+static int ab_ensure_capacity(int need) {
+    Contact* newbuf;
+    int newcap;
+
+    if (need <=capacity) return 1;
+
+    newcap = capacity;
+    while (newcap < need) {
+        newcap = newcap * 2;
+    }
+    newbuf = (Contact*)realloc(contacts, sizeof(Contact) * newcap);
+    if (!newbuf) {
+        puts("메모리 재할당 실패(메모리 부족)!!");
+        return 0;
+
+    }
+    contacts = newbuf;
+    capacity = newcap;
+    return 1;
+}
+
+#pragma endregion
